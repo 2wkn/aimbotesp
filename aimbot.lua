@@ -1,9 +1,10 @@
--- LocalScript em StarterGui (UI Redesenhada + Aimbot Legit com Transição Tronco -> Cabeça)
+-- LocalScript em StarterGui (knpad Hub - UI Completa + Splash Screen "Bem Vindo")
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -40,7 +41,62 @@ mainStroke.Color = Color3.fromRGB(40, 40, 50)
 mainStroke.Thickness = 1.5
 mainStroke.Parent = mainFrame
 
--- Barra Lateral (Sidebar Navigation)
+-- ==========================================
+-- TELA DE BEM-VINDO (WELCOME SCREEN SPLASH)
+-- ==========================================
+local welcomeFrame = Instance.new("Frame")
+welcomeFrame.Name = "WelcomeFrame"
+welcomeFrame.Size = UDim2.new(1, 0, 1, 0)
+welcomeFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+welcomeFrame.BorderSizePixel = 0
+welcomeFrame.ZIndex = 10
+welcomeFrame.Parent = mainFrame
+
+local welcomeCorner = Instance.new("UICorner")
+welcomeCorner.CornerRadius = UDim.new(0, 12)
+welcomeCorner.Parent = welcomeFrame
+
+local welcomeTitle = Instance.new("TextLabel")
+welcomeTitle.Size = UDim2.new(1, 0, 0, 40)
+welcomeTitle.Position = UDim2.new(0, 0, 0.35, 0)
+welcomeTitle.BackgroundTransparency = 1
+welcomeTitle.Text = "knpad Hub"
+welcomeTitle.TextColor3 = Color3.fromRGB(0, 170, 255)
+welcomeTitle.TextSize = 24
+welcomeTitle.Font = Enum.Font.GothamBold
+welcomeTitle.ZIndex = 11
+welcomeTitle.Parent = welcomeFrame
+
+local welcomeUser = Instance.new("TextLabel")
+welcomeUser.Size = UDim2.new(1, 0, 0, 30)
+welcomeUser.Position = UDim2.new(0, 0, 0.5, 0)
+welcomeUser.BackgroundTransparency = 1
+welcomeUser.Text = "Bem vindo, " .. LocalPlayer.DisplayName .. "!"
+welcomeUser.TextColor3 = Color3.fromRGB(220, 220, 230)
+welcomeUser.TextSize = 16
+welcomeUser.Font = Enum.Font.GothamMedium
+welcomeUser.ZIndex = 11
+welcomeUser.Parent = welcomeFrame
+
+-- Animação de Fade-out para a Tela de Bem-vindo
+task.spawn(function()
+	task.wait(2.2) -- Exibe a mensagem por ~2 segundos
+	
+	local tweenInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	
+	TweenService:Create(welcomeFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
+	TweenService:Create(welcomeTitle, tweenInfo, {TextTransparency = 1}):Play()
+	TweenService:Create(welcomeUser, tweenInfo, {TextTransparency = 1}):Play()
+	
+	task.wait(0.8)
+	welcomeFrame:Destroy() -- Destrói o frame de boas-vindas revelando a UI normal
+end)
+
+-- ==========================================
+-- ESTRUTURA DA UI HUB (BARRA LATERAL E CONTEÚDO)
+-- ==========================================
+
+-- Barra Lateral (Sidebar)
 local sidebar = Instance.new("Frame")
 sidebar.Name = "Sidebar"
 sidebar.Size = UDim2.new(0, 140, 1, 0)
@@ -59,17 +115,17 @@ sidebarFix.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
 sidebarFix.BorderSizePixel = 0
 sidebarFix.Parent = sidebar
 
--- Título da Sidebar
+-- Título
 local appTitle = Instance.new("TextLabel")
 appTitle.Size = UDim2.new(1, 0, 0, 50)
 appTitle.BackgroundTransparency = 1
-appTitle.Text = "FIND AN EXIT"
+appTitle.Text = "knpad Hub"
 appTitle.TextColor3 = Color3.fromRGB(0, 170, 255)
-appTitle.TextSize = 15
+appTitle.TextSize = 16
 appTitle.Font = Enum.Font.GothamBold
 appTitle.Parent = sidebar
 
--- Container dos Botões da Sidebar
+-- Container das Abas
 local tabContainer = Instance.new("Frame")
 tabContainer.Size = UDim2.new(1, -20, 1, -60)
 tabContainer.Position = UDim2.new(0, 10, 0, 50)
@@ -78,7 +134,7 @@ tabContainer.Parent = sidebar
 
 local tabListLayout = Instance.new("UIListLayout")
 tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabListLayout.Padding = UDim.new(0, 8)
+tabListLayout.Padding = UDim.new(0, 6)
 tabListLayout.Parent = tabContainer
 
 -- Area de Conteúdo Principal
@@ -115,7 +171,7 @@ closeBtn.MouseLeave:Connect(function()
 	TweenService:Create(closeBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(28, 28, 36), TextColor3 = Color3.fromRGB(150, 150, 160)}):Play()
 end)
 
--- Sistema de Páginas
+-- Páginas
 local pages = {}
 
 local function createPage(name)
@@ -140,17 +196,20 @@ end
 
 local aimbotPage = createPage("Aimbot")
 local espPage = createPage("ESP")
+local playerPage = createPage("Player")
+local hitboxPage = createPage("Hitbox")
+local lagPage = createPage("Lag")
 
 aimbotPage.Visible = true
 
 local function createTabButton(name, targetPage)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, 0, 0, 36)
+	btn.Size = UDim2.new(1, 0, 0, 30)
 	btn.BackgroundColor3 = (targetPage == aimbotPage) and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(30, 30, 38)
 	btn.Text = name
 	btn.TextColor3 = (targetPage == aimbotPage) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 160, 170)
 	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 13
+	btn.TextSize = 12
 	btn.AutoButtonColor = false
 	btn.Parent = tabContainer
 	
@@ -172,9 +231,12 @@ end
 
 createTabButton("Aimbot", aimbotPage)
 createTabButton("Visuals (ESP)", espPage)
+createTabButton("Player", playerPage)
+createTabButton("Hitbox", hitboxPage)
+createTabButton("Lag / Boost", lagPage)
 
 -- ==========================================
--- CONFIGURAÇÕES E ESTADO (SETTINGS)
+-- CONFIGURAÇÕES E ESTADO
 -- ==========================================
 local Settings = {
 	AimbotEnabled = true,
@@ -188,11 +250,23 @@ local Settings = {
 	Smoothness = 3,
 	ESPBoxEnabled = true,
 	ESPNameEnabled = true,
-	ESPHealthEnabled = true
+	ESPHealthEnabled = true,
+	WalkSpeed = 16,
+	JumpPower = 50,
+	InfiniteJump = false,
+	Noclip = false,
+	HitboxEnabled = false,
+	HitboxSize = 3,
+	HitboxTransparency = 0.5,
+	LowGraphics = false,
+	DisableShadows = false,
+	ClearDecals = false,
+	DisableParticles = false,
+	Fullbright = false
 }
 
 -- Componentes Visuais
-local function createToggle(parentPage, name, settingKey, defaultState)
+local function createToggle(parentPage, name, settingKey, defaultState, callback)
 	Settings[settingKey] = defaultState
 	
 	local toggleFrame = Instance.new("Frame")
@@ -247,6 +321,8 @@ local function createToggle(parentPage, name, settingKey, defaultState)
 		
 		TweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = targetPos}):Play()
 		TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+		
+		if callback then callback(state) end
 	end)
 end
 
@@ -299,7 +375,7 @@ local function createModeSelector(parentPage, name, settingKey, options, default
 	end)
 end
 
-local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaultVal)
+local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaultVal, callback)
 	Settings[settingKey] = defaultVal
 	
 	local sliderFrame = Instance.new("Frame")
@@ -365,6 +441,8 @@ local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaul
 		Settings[settingKey] = newVal
 		valueLabel.Text = tostring(newVal)
 		fill.Size = UDim2.new(pos, 0, 1, 0)
+		
+		if callback then callback(newVal) end
 	end
 
 	barBg.InputBegan:Connect(function(input)
@@ -387,7 +465,7 @@ local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaul
 	end)
 end
 
--- Preencher Aimbot
+-- Preencher Aba Aimbot
 createToggle(aimbotPage, "Ativar Aimbot", "AimbotEnabled", true)
 createModeSelector(aimbotPage, "Modo do Aimbot", "AimbotMode", {"Legit", "Full"}, "Legit")
 createToggle(aimbotPage, "Mostrar FOV", "ShowFOV", true)
@@ -398,21 +476,129 @@ createToggle(aimbotPage, "Mirar Aliados (Team Check)", "TeamCheck", false)
 createSlider(aimbotPage, "Raio do FOV", "FOVRadius", 30, 500, 120)
 createSlider(aimbotPage, "Suavidade", "Smoothness", 1, 10, 3)
 
--- Preencher Visuals (ESP)
+-- Preencher Aba Visuals (ESP)
 createToggle(espPage, "Ativar Box ESP", "ESPBoxEnabled", true)
 createToggle(espPage, "Mostrar Nome do Jogador", "ESPNameEnabled", true)
 createToggle(espPage, "Mostrar Barra de Vida (HP)", "ESPHealthEnabled", true)
 
--- Tecla 'K' para abrir/fechar
+-- Preencher Aba Player
+createSlider(playerPage, "Velocidade (WalkSpeed)", "WalkSpeed", 16, 200, 16, function(val)
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = val
+	end
+end)
+
+createSlider(playerPage, "Altura do Pulo (JumpPower)", "JumpPower", 50, 300, 50, function(val)
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = val
+	end
+end)
+
+createToggle(playerPage, "Pulo Infinito (Infinite Jump)", "InfiniteJump", false)
+
+createToggle(playerPage, "Noclip (Atravessar Paredes)", "Noclip", false, function(state)
+	if not state and LocalPlayer.Character then
+		for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
+			end
+		end
+	end
+end)
+
+-- Preencher Aba Hitbox
+createToggle(hitboxPage, "Ativar Hitbox Expander", "HitboxEnabled", false)
+createSlider(hitboxPage, "Tamanho da Hitbox", "HitboxSize", 1, 10, 3)
+createSlider(hitboxPage, "Transparência da Hitbox", "HitboxTransparency", 0, 10, 5)
+
+-- Preencher Aba Lag
+createToggle(lagPage, "Modo Low Graphics (Smooth Plastic)", "LowGraphics", false, function(state)
+	for _, v in ipairs(workspace:GetDescendants()) do
+		if v:IsA("BasePart") then
+			if state then v.Material = Enum.Material.SmoothPlastic end
+		end
+	end
+end)
+
+createToggle(lagPage, "Remover Sombras Globais", "DisableShadows", false, function(state)
+	Lighting.GlobalShadows = not state
+end)
+
+createToggle(lagPage, "Remover Texturas e Decals", "ClearDecals", false, function(state)
+	if state then
+		for _, v in ipairs(workspace:GetDescendants()) do
+			if v:IsA("Decal") or v:IsA("Texture") then v.Transparency = 1 end
+		end
+	end
+end)
+
+createToggle(lagPage, "Desativar Partículas e Efeitos", "DisableParticles", false, function(state)
+	for _, v in ipairs(workspace:GetDescendants()) do
+		if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+			v.Enabled = not state
+		end
+	end
+end)
+
+createToggle(lagPage, "Fullbright (Luz Total)", "Fullbright", false, function(state)
+	if state then
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+		Lighting.FogEnd = 100000
+	else
+		Lighting.Brightness = 1
+		Lighting.FogEnd = 10000
+	end
+end)
+
+-- Lógica do Noclip e Hitbox
+RunService.Stepped:Connect(function()
+	if Settings.Noclip and LocalPlayer.Character then
+		for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+	
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				if Settings.HitboxEnabled then
+					hrp.Size = Vector3.new(Settings.HitboxSize * 2, Settings.HitboxSize * 2, Settings.HitboxSize * 2)
+					hrp.Transparency = Settings.HitboxTransparency / 10
+					hrp.Color = Color3.fromRGB(255, 50, 50)
+					hrp.CanCollide = false
+				else
+					hrp.Size = Vector3.new(2, 2, 1)
+					hrp.Transparency = 1
+					hrp.CanCollide = true
+				end
+			end
+		end
+	end
+end)
+
+-- Pulo Infinito Listener
+UserInputService.JumpRequest:Connect(function()
+	if Settings.InfiniteJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+		LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+-- Correção da Tecla 'K'
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
+	local focusedTextBox = UserInputService:GetFocusedTextBox()
+	if focusedTextBox ~= nil then return end
+	
 	if input.KeyCode == Enum.KeyCode.K then
 		mainFrame.Visible = not mainFrame.Visible
 	end
 end)
 
 -- ==========================================
--- LÓGICA DE MIRA MODIFICADA (LEGIT: TRONCO -> CABEÇA)
+-- LÓGICA DE AIMBOT E ESP DE JOGADORES
 -- ==========================================
 
 local FOVCircle = Drawing.new("Circle")
@@ -424,11 +610,9 @@ FOVCircle.NumSides = 64
 FOVCircle.Transparency = 0.8
 
 local espObjects = {}
-
--- Variáveis de Controlo do Modo Legit (Sequência Tronco -> Cabeça)
 local lockStartTime = 0
 local currentTarget = nil
-local LEGIT_BODY_TIME = 0.35 -- Tempo em segundos mirado no tronco (aproximadamente o tempo de 2 tiros)
+local LEGIT_BODY_TIME = 0.35
 
 local function createESP(player)
 	if espObjects[player] then return end
@@ -552,7 +736,7 @@ RunService.RenderStepped:Connect(function()
 	FOVCircle.Radius = Settings.FOVRadius
 	FOVCircle.Visible = Settings.AimbotEnabled and Settings.ShowFOV
 	
-	-- Atualização do ESP
+	-- 1. ESP DE JOGADORES
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= LocalPlayer then
 			if not espObjects[player] then createESP(player) end
@@ -622,12 +806,11 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 	
-	-- LÓGICA DO AIMBOT COM TRANSIÇÃO LEGIT (TRONCO -> CABEÇA)
+	-- 2. AIMBOT
 	if Settings.AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 		local target = getClosestPlayerInFOV()
 		
 		if target and target.Character then
-			-- Reiniciar timer se for um alvo novo
 			if currentTarget ~= target then
 				currentTarget = target
 				lockStartTime = tick()
@@ -637,10 +820,8 @@ RunService.RenderStepped:Connect(function()
 			local elapsedTime = tick() - lockStartTime
 			
 			if Settings.AimbotMode == "Full" then
-				-- Modo Full: Trava direto na cabeça
 				targetPart = target.Character:FindFirstChild("Head")
 			else
-				-- Modo Legit: Primeiro 2 Tiros no Tronco (HumanoidRootPart), depois sobe para a Cabeça
 				if elapsedTime < LEGIT_BODY_TIME then
 					targetPart = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("UpperTorso")
 				else
