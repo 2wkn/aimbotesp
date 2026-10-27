@@ -1,4 +1,4 @@
--- LocalScript em StarterGui (knpad Hub - UI Completa + Splash Screen "Bem Vindo")
+-- LocalScript em StarterGui (knpad Hub - UI Completa + AutoTiro com Fix de Reação Contínua)
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -78,25 +78,20 @@ welcomeUser.Font = Enum.Font.GothamMedium
 welcomeUser.ZIndex = 11
 welcomeUser.Parent = welcomeFrame
 
--- Animação de Fade-out para a Tela de Bem-vindo
 task.spawn(function()
-	task.wait(2.2) -- Exibe a mensagem por ~2 segundos
-	
+	task.wait(2.2)
 	local tweenInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	
 	TweenService:Create(welcomeFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
 	TweenService:Create(welcomeTitle, tweenInfo, {TextTransparency = 1}):Play()
 	TweenService:Create(welcomeUser, tweenInfo, {TextTransparency = 1}):Play()
-	
 	task.wait(0.8)
-	welcomeFrame:Destroy() -- Destrói o frame de boas-vindas revelando a UI normal
+	welcomeFrame:Destroy()
 end)
 
 -- ==========================================
 -- ESTRUTURA DA UI HUB (BARRA LATERAL E CONTEÚDO)
 -- ==========================================
 
--- Barra Lateral (Sidebar)
 local sidebar = Instance.new("Frame")
 sidebar.Name = "Sidebar"
 sidebar.Size = UDim2.new(0, 140, 1, 0)
@@ -115,7 +110,6 @@ sidebarFix.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
 sidebarFix.BorderSizePixel = 0
 sidebarFix.Parent = sidebar
 
--- Título
 local appTitle = Instance.new("TextLabel")
 appTitle.Size = UDim2.new(1, 0, 0, 50)
 appTitle.BackgroundTransparency = 1
@@ -125,7 +119,6 @@ appTitle.TextSize = 16
 appTitle.Font = Enum.Font.GothamBold
 appTitle.Parent = sidebar
 
--- Container das Abas
 local tabContainer = Instance.new("Frame")
 tabContainer.Size = UDim2.new(1, -20, 1, -60)
 tabContainer.Position = UDim2.new(0, 10, 0, 50)
@@ -134,10 +127,9 @@ tabContainer.Parent = sidebar
 
 local tabListLayout = Instance.new("UIListLayout")
 tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabListLayout.Padding = UDim.new(0, 6)
+tabListLayout.Padding = UDim.new(0, 5)
 tabListLayout.Parent = tabContainer
 
--- Area de Conteúdo Principal
 local contentArea = Instance.new("Frame")
 contentArea.Name = "ContentArea"
 contentArea.Size = UDim2.new(1, -150, 1, -45)
@@ -145,12 +137,11 @@ contentArea.Position = UDim2.new(0, 145, 0, 40)
 contentArea.BackgroundTransparency = 1
 contentArea.Parent = mainFrame
 
--- Botão Fechar (X)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 26, 0, 26)
 closeBtn.Position = UDim2.new(1, -34, 0, 10)
 closeBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
-closeBtn.Text = "x"
+closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(150, 150, 160)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 12
@@ -171,7 +162,6 @@ closeBtn.MouseLeave:Connect(function()
 	TweenService:Create(closeBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(28, 28, 36), TextColor3 = Color3.fromRGB(150, 150, 160)}):Play()
 end)
 
--- Páginas
 local pages = {}
 
 local function createPage(name)
@@ -195,6 +185,8 @@ local function createPage(name)
 end
 
 local aimbotPage = createPage("Aimbot")
+local autoTiroPage = createPage("AutoTiro")
+local fovPage = createPage("FOV Customizer")
 local espPage = createPage("ESP")
 local playerPage = createPage("Player")
 local hitboxPage = createPage("Hitbox")
@@ -204,17 +196,17 @@ aimbotPage.Visible = true
 
 local function createTabButton(name, targetPage)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, 0, 0, 30)
+	btn.Size = UDim2.new(1, 0, 0, 26)
 	btn.BackgroundColor3 = (targetPage == aimbotPage) and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(30, 30, 38)
 	btn.Text = name
 	btn.TextColor3 = (targetPage == aimbotPage) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 160, 170)
 	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 12
+	btn.TextSize = 11
 	btn.AutoButtonColor = false
 	btn.Parent = tabContainer
 	
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
+	corner.CornerRadius = UDim.new(0, 6)
 	corner.Parent = btn
 	
 	btn.MouseButton1Click:Connect(function()
@@ -230,6 +222,8 @@ local function createTabButton(name, targetPage)
 end
 
 createTabButton("Aimbot", aimbotPage)
+createTabButton("AutoTiro", autoTiroPage)
+createTabButton("FOV Settings", fovPage)
 createTabButton("Visuals (ESP)", espPage)
 createTabButton("Player", playerPage)
 createTabButton("Hitbox", hitboxPage)
@@ -248,6 +242,16 @@ local Settings = {
 	TeamCheck = false,
 	FOVRadius = 120,
 	Smoothness = 3,
+	-- Configuração AutoTiro
+	AutoTiroEnabled = false,
+	ReactionDelay = 0.1,
+	-- Configurações FOV
+	RainbowFOV = false,
+	FilledFOV = false,
+	FOVColor = "Azul",
+	FOVThickness = 1.5,
+	FOVTransparency = 8,
+	-- ESP & Outros
 	ESPBoxEnabled = true,
 	ESPNameEnabled = true,
 	ESPHealthEnabled = true,
@@ -375,7 +379,7 @@ local function createModeSelector(parentPage, name, settingKey, options, default
 	end)
 end
 
-local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaultVal, callback)
+local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaultVal, isFloat, callback)
 	Settings[settingKey] = defaultVal
 	
 	local sliderFrame = Instance.new("Frame")
@@ -388,7 +392,7 @@ local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaul
 	corner.Parent = sliderFrame
 	
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0.6, 0, 0, 22)
+	label.Size = UDim2.new(0.5, 0, 0, 22)
 	label.Position = UDim2.new(0, 12, 0, 4)
 	label.BackgroundTransparency = 1
 	label.Text = name
@@ -399,10 +403,10 @@ local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaul
 	label.Parent = sliderFrame
 	
 	local valueLabel = Instance.new("TextLabel")
-	valueLabel.Size = UDim2.new(0.3, 0, 0, 22)
-	valueLabel.Position = UDim2.new(0.7, -12, 0, 4)
+	valueLabel.Size = UDim2.new(0.4, 0, 0, 22)
+	valueLabel.Position = UDim2.new(0.6, -12, 0, 4)
 	valueLabel.BackgroundTransparency = 1
-	valueLabel.Text = tostring(defaultVal)
+	valueLabel.Text = isFloat and string.format("%.3fs", defaultVal) or tostring(defaultVal)
 	valueLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
 	valueLabel.Font = Enum.Font.GothamBold
 	valueLabel.TextSize = 13
@@ -436,10 +440,11 @@ local function createSlider(parentPage, name, settingKey, minVal, maxVal, defaul
 	
 	local function updateSlider(input)
 		local pos = math.clamp((input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
-		local newVal = math.floor(minVal + ((maxVal - minVal) * pos))
+		local rawVal = minVal + ((maxVal - minVal) * pos)
+		local newVal = isFloat and tonumber(string.format("%.3f", rawVal)) or math.floor(rawVal)
 		
 		Settings[settingKey] = newVal
-		valueLabel.Text = tostring(newVal)
+		valueLabel.Text = isFloat and string.format("%.3fs", newVal) or tostring(newVal)
 		fill.Size = UDim2.new(pos, 0, 1, 0)
 		
 		if callback then callback(newVal) end
@@ -473,8 +478,19 @@ createToggle(aimbotPage, "Ignorar Mortos (Death Check)", "DeathCheck", true)
 createToggle(aimbotPage, "Verificar Paredes (Wall Check)", "WallCheck", true)
 createToggle(aimbotPage, "Suavização (Smooth Lock)", "SmoothLock", true)
 createToggle(aimbotPage, "Mirar Aliados (Team Check)", "TeamCheck", false)
-createSlider(aimbotPage, "Raio do FOV", "FOVRadius", 30, 500, 120)
-createSlider(aimbotPage, "Suavidade", "Smoothness", 1, 10, 3)
+createSlider(aimbotPage, "Raio do FOV", "FOVRadius", 30, 500, 120, false)
+createSlider(aimbotPage, "Suavidade", "Smoothness", 1, 10, 3, false)
+
+-- Preencher Aba AutoTiro
+createToggle(autoTiroPage, "Ativar AutoTiro", "AutoTiroEnabled", false)
+createSlider(autoTiroPage, "Tempo de Reação Inicial", "ReactionDelay", 0.001, 1.0, 0.1, true)
+
+-- Preencher Aba FOV Settings
+createToggle(fovPage, "Modo Rainbow (RGB Animado)", "RainbowFOV", false)
+createToggle(fovPage, "Preencher Círculo (Filled FOV)", "FilledFOV", false)
+createModeSelector(fovPage, "Cor do FOV", "FOVColor", {"Azul", "Vermelho", "Verde", "Roxo"}, "Azul")
+createSlider(fovPage, "Espessura da Linha", "FOVThickness", 1, 5, 2, false)
+createSlider(fovPage, "Visibilidade/Transparência", "FOVTransparency", 1, 10, 8, false)
 
 -- Preencher Aba Visuals (ESP)
 createToggle(espPage, "Ativar Box ESP", "ESPBoxEnabled", true)
@@ -482,13 +498,13 @@ createToggle(espPage, "Mostrar Nome do Jogador", "ESPNameEnabled", true)
 createToggle(espPage, "Mostrar Barra de Vida (HP)", "ESPHealthEnabled", true)
 
 -- Preencher Aba Player
-createSlider(playerPage, "Velocidade (WalkSpeed)", "WalkSpeed", 16, 200, 16, function(val)
+createSlider(playerPage, "Velocidade (WalkSpeed)", "WalkSpeed", 16, 200, 16, false, function(val)
 	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = val
 	end
 end)
 
-createSlider(playerPage, "Altura do Pulo (JumpPower)", "JumpPower", 50, 300, 50, function(val)
+createSlider(playerPage, "Altura do Pulo (JumpPower)", "JumpPower", 50, 300, 50, false, function(val)
 	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = val
 	end
@@ -508,8 +524,8 @@ end)
 
 -- Preencher Aba Hitbox
 createToggle(hitboxPage, "Ativar Hitbox Expander", "HitboxEnabled", false)
-createSlider(hitboxPage, "Tamanho da Hitbox", "HitboxSize", 1, 10, 3)
-createSlider(hitboxPage, "Transparência da Hitbox", "HitboxTransparency", 0, 10, 5)
+createSlider(hitboxPage, "Tamanho da Hitbox", "HitboxSize", 1, 10, 3, false)
+createSlider(hitboxPage, "Transparência da Hitbox", "HitboxTransparency", 0, 10, 5, false)
 
 -- Preencher Aba Lag
 createToggle(lagPage, "Modo Low Graphics (Smooth Plastic)", "LowGraphics", false, function(state)
@@ -551,7 +567,7 @@ createToggle(lagPage, "Fullbright (Luz Total)", "Fullbright", false, function(st
 	end
 end)
 
--- Lógica do Noclip e Hitbox
+-- Lógica de Física (Noclip e Hitbox)
 RunService.Stepped:Connect(function()
 	if Settings.Noclip and LocalPlayer.Character then
 		for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
@@ -598,7 +614,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- ==========================================
--- LÓGICA DE AIMBOT E ESP DE JOGADORES
+-- LÓGICA DE AIMBOT, AUTOTIRO E ESP
 -- ==========================================
 
 local FOVCircle = Drawing.new("Circle")
@@ -613,6 +629,12 @@ local espObjects = {}
 local lockStartTime = 0
 local currentTarget = nil
 local LEGIT_BODY_TIME = 0.35
+
+-- Variáveis Corrigidas do AutoTiro
+local autoTiroFirstSeen = 0
+local autoTiroFiring = false
+local lastAutoTiroShot = 0
+local lastTargetSeenTime = 0
 
 local function createESP(player)
 	if espObjects[player] then return end
@@ -732,8 +754,28 @@ end
 RunService.RenderStepped:Connect(function()
 	local mousePos = UserInputService:GetMouseLocation()
 	
+	-- Atualização Visual do Círculo de FOV
 	FOVCircle.Position = mousePos
 	FOVCircle.Radius = Settings.FOVRadius
+	FOVCircle.Thickness = Settings.FOVThickness
+	FOVCircle.Transparency = Settings.FOVTransparency / 10
+	FOVCircle.Filled = Settings.FilledFOV
+	
+	if Settings.RainbowFOV then
+		local hue = (tick() % 3) / 3
+		FOVCircle.Color = Color3.fromHSV(hue, 1, 1)
+	else
+		if Settings.FOVColor == "Vermelho" then
+			FOVCircle.Color = Color3.fromRGB(255, 50, 50)
+		elseif Settings.FOVColor == "Verde" then
+			FOVCircle.Color = Color3.fromRGB(50, 255, 50)
+		elseif Settings.FOVColor == "Roxo" then
+			FOVCircle.Color = Color3.fromRGB(170, 50, 255)
+		else
+			FOVCircle.Color = Color3.fromRGB(0, 170, 255)
+		end
+	end
+	
 	FOVCircle.Visible = Settings.AimbotEnabled and Settings.ShowFOV
 	
 	-- 1. ESP DE JOGADORES
@@ -806,7 +848,66 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 	
-	-- 2. AIMBOT
+	-- 2. AUTOTIRO (Com Buffer de Reação Ininterrupto)
+	if Settings.AutoTiroEnabled then
+		local unitRay = Camera:ViewportPointToRay(mousePos.X, mousePos.Y)
+		local raycastParams = RaycastParams.new()
+		raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+		if LocalPlayer.Character then
+			raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+		end
+		
+		local result = workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000, raycastParams)
+		local hasTargetOnCrosshair = false
+		
+		if result and result.Instance then
+			local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+			if hitModel then
+				local targetPlayer = Players:GetPlayerFromCharacter(hitModel)
+				if targetPlayer and targetPlayer ~= LocalPlayer and isAlive(targetPlayer) then
+					if not Settings.TeamCheck or targetPlayer.Team ~= LocalPlayer.Team then
+						hasTargetOnCrosshair = true
+					end
+				end
+			end
+		end
+		
+		local now = tick()
+		
+		if hasTargetOnCrosshair then
+			lastTargetSeenTime = now
+			
+			if autoTiroFirstSeen == 0 then
+				autoTiroFirstSeen = now
+			end
+			
+			-- Se já passou o tempo inicial de reação escolhido na UI:
+			if (now - autoTiroFirstSeen) >= Settings.ReactionDelay then
+				autoTiroFiring = true
+			end
+		else
+			-- Buffer de 0.15s para evitar resets involuntários do tempo de reação
+			if (now - lastTargetSeenTime) > 0.15 then
+				autoTiroFirstSeen = 0
+				autoTiroFiring = false
+			end
+		end
+		
+		-- Disparo em rajada contínua quando o estado de disparo estiver ativo
+		if autoTiroFiring and hasTargetOnCrosshair then
+			if (now - lastAutoTiroShot) >= 0.04 then
+				lastAutoTiroShot = now
+				if mouse1click then
+					mouse1click()
+				end
+			end
+		end
+	else
+		autoTiroFirstSeen = 0
+		autoTiroFiring = false
+	end
+
+	-- 3. AIMBOT
 	if Settings.AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 		local target = getClosestPlayerInFOV()
 		
