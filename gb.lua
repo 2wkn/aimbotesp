@@ -1,4 +1,4 @@
--- LocalScript Único - gbzinbr scripts (FOV no Centro do Ecrã / Mobile)
+-- LocalScript Único - gbzinbr scripts (Com Team Check Corrigido e Sem Lentidão)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,13 +16,13 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- Mini Quadrado com Imagem (Botão Flutuante para Abrir/Fechar)
+-- Mini Quadrado com Imagem
 local toggleButton = Instance.new("ImageButton")
 toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 45, 0, 45)
 toggleButton.Position = UDim2.new(0, 20, 0.5, -20)
 toggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-toggleButton.Image = "rbxassetid://113552756681096" -- SUBSTITUI O 0 PELO ID DA TUA IMAGEM CARREGADA
+toggleButton.Image = "rbxassetid://0" -- Substitui pelo teu ID de Imagem
 toggleButton.AutoButtonColor = false
 toggleButton.Parent = screenGui
 
@@ -89,7 +89,7 @@ local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 26, 0, 26)
 closeButton.Position = UDim2.new(1, -32, 0, 6)
 closeButton.BackgroundTransparency = 1
-closeButton.Text = "x"
+closeButton.Text = "✕"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.TextSize = 14
 closeButton.Font = Enum.Font.GothamBold
@@ -148,7 +148,7 @@ makeDraggable(toggleButton)
 makeDraggable(mainFrame, titleBar)
 
 
--- 4. CONFIGURAÇÕES GLOBAIS DE LOGICA
+-- 4. CONFIGURAÇÕES GLOBAIS DE LÓGICA
 local SETTINGS = {
 	AimbotMaster = false,
 	AimbotMode = "Legit",
@@ -156,8 +156,8 @@ local SETTINGS = {
 	IgnoreDead = true,
 	WallCheck = false,
 	SmoothLock = true,
-	TeamCheck = false,
-	FOVRadius = 150, -- Raio ajustado para o centro da mira
+	TeamCheck = true, -- Ativado por defeito para proteger aliados
+	FOVRadius = 150,
 
 	EspMaster = false,
 	Box2D = false,
@@ -333,7 +333,7 @@ createToggleWithCallback(aimbotTab, "Mostrar FOV", 3, false, function(v) SETTING
 createToggleWithCallback(aimbotTab, "Ignorar Mortos (Death Check)", 4, true, function(v) SETTINGS.IgnoreDead = v end)
 createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 5, false, function(v) SETTINGS.WallCheck = v end)
 createToggleWithCallback(aimbotTab, "Suavização (Smooth Lock)", 6, true, function(v) SETTINGS.SmoothLock = v end)
-createToggleWithCallback(aimbotTab, "Mirar Aliados (Team Check)", 7, false, function(v) SETTINGS.TeamCheck = v end)
+createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 7, true, function(v) SETTINGS.TeamCheck = v end)
 
 -- Criar Aba ESP
 local espTab = createTab("Esp", 2)
@@ -345,15 +345,20 @@ createToggleWithCallback(espTab, "Skeleton ESP (Esqueleto)", 5, false, function(
 
 -- Criar Aba Diversos
 local diversosTab = createTab("Diversos", 3)
-createToggleWithCallback(diversosTab, "Fullbright (Iluminação Máxima)", 1, false, function(v) SETTINGS.Fullbright = v end)
-createToggleWithCallback(diversosTab, "Speed Hack (Velocidade x2)", 2, false, function(v) SETTINGS.SpeedHack = v end)
+createToggleWithCallback(diversosTab, "Fullbright (Iluminação)", 1, false, function(v) SETTINGS.Fullbright = v end)
+createToggleWithCallback(diversosTab, "Speed Hack (Velocidade x2)", 2, false, function(v) 
+	SETTINGS.SpeedHack = v 
+	if not v and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+		localPlayer.Character.Humanoid.WalkSpeed = 16
+	end
+end)
 
 -- Criar Aba Info
 local infoTab = createTab("Info", 4)
 local infoLabel = Instance.new("TextLabel")
 infoLabel.Size = UDim2.new(1, 0, 0, 100)
 infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "gbzinbr scripts\nPainel de Controlo Total\nEstado: Operacional com Lógica Ativa."
+infoLabel.Text = "gbzinbr scripts\nPainel de Controlo Total\nEstado: Operacional e Otimizado."
 infoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 infoLabel.TextSize = 13
 infoLabel.Font = Enum.Font.Gotham
@@ -362,7 +367,6 @@ infoLabel.Parent = infoTab
 
 
 -- 5. LÓGICA DE EXECUÇÃO GERAL (RENDERLOOP)
--- FOV posicionado exatamente no meio do ecrã (perfeito para Mobile e mira central)
 local fovCircle = Drawing.new("Circle")
 fovCircle.Thickness = 1.5
 fovCircle.NumSides = 60
@@ -384,19 +388,31 @@ end
 
 Players.PlayerRemoving:Connect(removeEsp)
 
+-- Verificação Rigorosa de Equipa (Team Check)
+local function isTeammate(otherPlayer)
+	if not SETTINGS.TeamCheck then return false end
+	
+	-- Verifica via Teams nativos do Roblox
+	if localPlayer.Team and otherPlayer.Team then
+		return localPlayer.Team == otherPlayer.Team
+	end
+	
+	-- Verifica via TeamColor
+	if localPlayer.TeamColor and otherPlayer.TeamColor then
+		return localPlayer.TeamColor == otherPlayer.TeamColor
+	end
+	
+	return false
+end
+
 local function getClosestTargetToCenter()
 	local closestTarget = nil
 	local shortestDist = SETTINGS.FOVRadius
 	local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 
 	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= localPlayer then
-			local isTeam = false
-			if not SETTINGS.TeamCheck and player.Team and localPlayer.Team and player.Team == localPlayer.Team then
-				isTeam = true
-			end
-
-			if not isTeam and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+		if player ~= localPlayer and not isTeammate(player) then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
 				local humanoid = player.Character.Humanoid
 				if not SETTINGS.IgnoreDead or humanoid.Health > 0 then
 					local targetPart = player.Character:FindFirstChild("Head") or player.Character.HumanoidRootPart
@@ -417,12 +433,12 @@ local function getClosestTargetToCenter()
 end
 
 RunService.RenderStepped:Connect(function()
-	-- Fixar o círculo de FOV exatamente no centro da tela (mira)
+	-- 1. FOV no centro da tela
 	fovCircle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 	fovCircle.Visible = SETTINGS.AimbotMaster and SETTINGS.ShowFOV
 
+	-- 2. Lógica de Aimbot
 	if SETTINGS.AimbotMaster then
-		-- No telemóvel/mobile, o aimbot atua diretamente quando ativado (ou com toque/mira centralizada)
 		if SETTINGS.AimbotMode == "Rage" or UserInputService.TouchEnabled or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 			local target = getClosestTargetToCenter()
 			if target then
@@ -438,6 +454,12 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 
+	-- 3. Speed Hack Ajustado (Só força WalkSpeed se a opção estiver ligada)
+	if SETTINGS.SpeedHack and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+		localPlayer.Character.Humanoid.WalkSpeed = 32
+	end
+
+	-- 4. Fullbright
 	if SETTINGS.Fullbright then
 		Lighting.Brightness = 2
 		Lighting.ClockTime = 14
@@ -445,15 +467,7 @@ RunService.RenderStepped:Connect(function()
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
 	end
 
-	if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-		local hum = localPlayer.Character.Humanoid
-		if SETTINGS.SpeedHack then
-			hum.WalkSpeed = 32
-		else
-			hum.WalkSpeed = 16
-		end
-	end
-
+	-- 5. Lógica ESP
 	if not SETTINGS.EspMaster then
 		for player, _ in pairs(espCache) do
 			removeEsp(player)
@@ -462,7 +476,7 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+		if player ~= localPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
 			local character = player.Character
 			local humanoid = character.Humanoid
 			local rootPart = character.HumanoidRootPart
@@ -675,15 +689,13 @@ local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirectio
 local isDraggingButton = false
 
 toggleButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		isDraggingButton = false
 	end
 end)
 toggleButton.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-			isDraggingButton = true
-		end
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		isDraggingButton = true
 	end
 end)
 
