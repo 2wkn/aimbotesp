@@ -1,4 +1,4 @@
--- LocalScript Único - gbzinbr scripts (Com Team Check Corrigido e Sem Lentidão)
+-- LocalScript Único - gbzinbr scripts (Com Wall Check Funcional)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -22,7 +22,7 @@ toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 45, 0, 45)
 toggleButton.Position = UDim2.new(0, 20, 0.5, -20)
 toggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-toggleButton.Image = "rbxassetid://0" -- Substitui pelo teu ID de Imagem
+toggleButton.Image = "rbxassetid://113552756681096" -- Substitui pelo teu ID de Imagem
 toggleButton.AutoButtonColor = false
 toggleButton.Parent = screenGui
 
@@ -89,7 +89,7 @@ local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 26, 0, 26)
 closeButton.Position = UDim2.new(1, -32, 0, 6)
 closeButton.BackgroundTransparency = 1
-closeButton.Text = "✕"
+closeButton.Text = "x"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.TextSize = 14
 closeButton.Font = Enum.Font.GothamBold
@@ -154,9 +154,9 @@ local SETTINGS = {
 	AimbotMode = "Legit",
 	ShowFOV = false,
 	IgnoreDead = true,
-	WallCheck = false,
+	WallCheck = true, -- Wall Check ativado e funcional
 	SmoothLock = true,
-	TeamCheck = true, -- Ativado por defeito para proteger aliados
+	TeamCheck = true,
 	FOVRadius = 150,
 
 	EspMaster = false,
@@ -331,7 +331,7 @@ modeLine.Parent = modeFrame
 
 createToggleWithCallback(aimbotTab, "Mostrar FOV", 3, false, function(v) SETTINGS.ShowFOV = v end)
 createToggleWithCallback(aimbotTab, "Ignorar Mortos (Death Check)", 4, true, function(v) SETTINGS.IgnoreDead = v end)
-createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 5, false, function(v) SETTINGS.WallCheck = v end)
+createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 5, true, function(v) SETTINGS.WallCheck = v end)
 createToggleWithCallback(aimbotTab, "Suavização (Smooth Lock)", 6, true, function(v) SETTINGS.SmoothLock = v end)
 createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 7, true, function(v) SETTINGS.TeamCheck = v end)
 
@@ -388,21 +388,47 @@ end
 
 Players.PlayerRemoving:Connect(removeEsp)
 
--- Verificação Rigorosa de Equipa (Team Check)
 local function isTeammate(otherPlayer)
 	if not SETTINGS.TeamCheck then return false end
-	
-	-- Verifica via Teams nativos do Roblox
 	if localPlayer.Team and otherPlayer.Team then
 		return localPlayer.Team == otherPlayer.Team
 	end
-	
-	-- Verifica via TeamColor
 	if localPlayer.TeamColor and otherPlayer.TeamColor then
 		return localPlayer.TeamColor == otherPlayer.TeamColor
 	end
-	
 	return false
+end
+
+-- Função de Wall Check (Raycast preciso)
+local function isVisible(targetPart)
+	if not SETTINGS.WallCheck then return true end
+	
+	local origin = camera.CFrame.Position
+	local direction = targetPart.Position - origin
+	
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterType = RaycastParams.FilterType.Exclude
+	
+	-- Ignorar a câmara, o próprio jogador e o alvo a testar
+	local ignoreList = {camera}
+	if localPlayer.Character then
+		table.insert(ignoreList, localPlayer.Character)
+	end
+	if targetPart.Parent then
+		table.insert(ignoreList, targetPart.Parent)
+	end
+	
+	raycastParams.FilterDescendantsInstances = ignoreList
+	raycastParams.IgnoreWater = true
+	
+	local result = workspace:Raycast(origin, direction, raycastParams)
+	
+	-- Se o raio bateu em algo antes de chegar ao alvo, significa que há uma parede no caminho
+	if result then
+		return false
+	end
+	
+	return true
 end
 
 local function getClosestTargetToCenter()
@@ -418,7 +444,7 @@ local function getClosestTargetToCenter()
 					local targetPart = player.Character:FindFirstChild("Head") or player.Character.HumanoidRootPart
 					local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
 
-					if onScreen then
+					if onScreen and isVisible(targetPart) then
 						local magnitude = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
 						if magnitude < shortestDist then
 							shortestDist = magnitude
@@ -433,11 +459,9 @@ local function getClosestTargetToCenter()
 end
 
 RunService.RenderStepped:Connect(function()
-	-- 1. FOV no centro da tela
 	fovCircle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 	fovCircle.Visible = SETTINGS.AimbotMaster and SETTINGS.ShowFOV
 
-	-- 2. Lógica de Aimbot
 	if SETTINGS.AimbotMaster then
 		if SETTINGS.AimbotMode == "Rage" or UserInputService.TouchEnabled or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 			local target = getClosestTargetToCenter()
@@ -454,12 +478,10 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 
-	-- 3. Speed Hack Ajustado (Só força WalkSpeed se a opção estiver ligada)
 	if SETTINGS.SpeedHack and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
 		localPlayer.Character.Humanoid.WalkSpeed = 32
 	end
 
-	-- 4. Fullbright
 	if SETTINGS.Fullbright then
 		Lighting.Brightness = 2
 		Lighting.ClockTime = 14
@@ -467,7 +489,6 @@ RunService.RenderStepped:Connect(function()
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
 	end
 
-	-- 5. Lógica ESP
 	if not SETTINGS.EspMaster then
 		for player, _ in pairs(espCache) do
 			removeEsp(player)
@@ -689,7 +710,7 @@ local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirectio
 local isDraggingButton = false
 
 toggleButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		isDraggingButton = false
 	end
 end)
