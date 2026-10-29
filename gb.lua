@@ -1,4 +1,4 @@
--- LocalScript Único - gbzinbr scripts (ESP e Aimbot Nativos - Sem Drawing API)
+-- LocalScript Único - gbzinbr scripts (Com Slider de FOV Personalizado)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -21,7 +21,7 @@ local fovFrame = Instance.new("Frame")
 fovFrame.Name = "FOV_Circle"
 fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-fovFrame.Size = UDim2.new(0, 300, 0, 300) -- FOV de 150 de raio
+fovFrame.Size = UDim2.new(0, 300, 0, 300) -- Inicial (Raio 150 * 2)
 fovFrame.BackgroundTransparency = 1
 fovFrame.Visible = false
 fovFrame.Parent = screenGui
@@ -42,7 +42,7 @@ toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 45, 0, 45)
 toggleButton.Position = UDim2.new(0, 20, 0.5, -20)
 toggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-toggleButton.Image = "rbxassetid://0" -- Substitui pelo teu ID de Imagem
+toggleButton.Image = "rbxassetid://0" -- Substitui pelo teu ID de Imagem se quiseres
 toggleButton.AutoButtonColor = false
 toggleButton.Parent = screenGui
 
@@ -58,8 +58,8 @@ btnStroke.Parent = toggleButton
 -- Janela Principal
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 480, 0, 380)
-mainFrame.Position = UDim2.new(0.5, -240, 0.5, -190)
+mainFrame.Size = UDim2.new(0, 480, 0, 420) -- Altura ajustada para caber o slider
+mainFrame.Position = UDim2.new(0.5, -240, 0.5, -210)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
@@ -109,7 +109,7 @@ local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 26, 0, 26)
 closeButton.Position = UDim2.new(1, -32, 0, 6)
 closeButton.BackgroundTransparency = 1
-closeButton.Text = "✕"
+closeButton.Text = "x"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.TextSize = 14
 closeButton.Font = Enum.Font.GothamBold
@@ -174,16 +174,15 @@ local SETTINGS = {
 	AimbotMode = "Legit",
 	ShowFOV = false,
 	IgnoreDead = true,
-	WallCheck = false, -- Desativado por padrão para testes sem falhas
+	WallCheck = false,
 	SmoothLock = true,
 	TeamCheck = false,
-	FOVRadius = 150,
+	FOVRadius = 150, -- Valor inicial do FOV
 
 	EspMaster = false,
 	Box2D = false,
 	Name = false,
 	HealthBar = false,
-	Skeleton = false,
 
 	Fullbright = false,
 	SpeedHack = false
@@ -289,15 +288,118 @@ local function createToggleWithCallback(parent, text, order, defaultState, callb
 	end)
 end
 
+-- Função para criar o Slider exato da imagem enviada (Regular FOV)
+local function createSlider(parent, text, order, minVal, maxVal, defaultVal, callback)
+	local sliderFrame = Instance.new("Frame")
+	sliderFrame.Size = UDim2.new(1, 0, 0, 50)
+	sliderFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	sliderFrame.BorderSizePixel = 0
+	sliderFrame.LayoutOrder = order
+	sliderFrame.Parent = parent
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = sliderFrame
+	
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0, 140, 0, 20)
+	label.Position = UDim2.new(0, 12, 0, 6)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.fromRGB(220, 220, 220)
+	label.TextSize = 13
+	label.Font = Enum.Font.Gotham
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = sliderFrame
+	
+	-- Barra preta de fundo do slider
+	local sliderBar = Instance.new("TextButton")
+	sliderBar.Name = "SliderBar"
+	sliderBar.Size = UDim2.new(1, -24, 0, 12)
+	sliderBar.Position = UDim2.new(0, 12, 0, 30)
+	sliderBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	sliderBar.Text = ""
+	sliderBar.AutoButtonColor = false
+	sliderBar.Parent = sliderFrame
+	
+	local barCorner = Instance.new("UICorner")
+	barCorner.CornerRadius = UDim.new(0, 3)
+	barCorner.Parent = sliderBar
+	
+	-- Bloco vermelho indicador e o número centralizado exatamente como na tua foto
+	local redFill = Instance.new("Frame")
+	redFill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
+	redFill.BackgroundColor3 = Color3.fromRGB(220, 20, 20)
+	redFill.BorderSizePixel = 0
+	redFill.Parent = sliderBar
+	
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(0, 3)
+	fillCorner.Parent = redFill
+	
+	local valLabel = Instance.new("TextLabel")
+	valLabel.Size = UDim2.new(1, 0, 1, 0)
+	valLabel.BackgroundTransparency = 1
+	valLabel.Text = tostring(defaultVal)
+	valLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	valLabel.TextSize = 11
+	valLabel.Font = Enum.Font.GothamBold
+	valLabel.ZIndex = 3
+	valLabel.Parent = sliderBar
+	
+	local line = Instance.new("Frame")
+	line.Size = UDim2.new(1, 0, 0, 1)
+	line.Position = UDim2.new(0, 0, 1, 10)
+	line.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
+	line.BorderSizePixel = 0
+	line.Parent = sliderFrame
+	
+	-- Lógica de arrastar o slider (funciona em PC e Telemóvel)
+	local dragging = false
+	
+	local function updateSlider(input)
+		local posRelative = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+		local val = math.floor(minVal + ((maxVal - minVal) * posRelative))
+		redFill.Size = UDim2.new(posRelative, 0, 1, 0)
+		valLabel.Text = tostring(val)
+		callback(val)
+	end
+	
+	sliderBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			updateSlider(input)
+		end
+	end)
+	
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			updateSlider(input)
+		end
+	end)
+end
+
 -- Criar Aba Aimbot
 local aimbotTab = createTab("Aimbot", 1)
 createToggleWithCallback(aimbotTab, "Ativar Aimbot", 1, false, function(v) SETTINGS.AimbotMaster = v end)
+
+-- Slider exato pedido na imagem (Regular FOV de 50 a 500)
+createSlider(aimbotTab, "Regular FOV", 2, 50, 500, 150, function(val)
+	SETTINGS.FOVRadius = val
+	fovFrame.Size = UDim2.new(0, val * 2, 0, val * 2)
+end)
 
 local modeFrame = Instance.new("Frame")
 modeFrame.Size = UDim2.new(1, 0, 0, 42)
 modeFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 modeFrame.BorderSizePixel = 0
-modeFrame.LayoutOrder = 2
+modeFrame.LayoutOrder = 3
 modeFrame.Parent = aimbotTab
 
 local modeCorner = Instance.new("UICorner")
@@ -349,11 +451,11 @@ modeLine.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
 modeLine.BorderSizePixel = 0
 modeLine.Parent = modeFrame
 
-createToggleWithCallback(aimbotTab, "Mostrar FOV", 3, false, function(v) SETTINGS.ShowFOV = v end)
-createToggleWithCallback(aimbotTab, "Ignorar Mortos (Death Check)", 4, true, function(v) SETTINGS.IgnoreDead = v end)
-createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 5, false, function(v) SETTINGS.WallCheck = v end)
-createToggleWithCallback(aimbotTab, "Suavização (Smooth Lock)", 6, true, function(v) SETTINGS.SmoothLock = v end)
-createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 7, false, function(v) SETTINGS.TeamCheck = v end)
+createToggleWithCallback(aimbotTab, "Mostrar FOV", 4, false, function(v) SETTINGS.ShowFOV = v end)
+createToggleWithCallback(aimbotTab, "Ignorar Mortos (Death Check)", 5, true, function(v) SETTINGS.IgnoreDead = v end)
+createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 6, false, function(v) SETTINGS.WallCheck = v end)
+createToggleWithCallback(aimbotTab, "Suavização (Smooth Lock)", 7, true, function(v) SETTINGS.SmoothLock = v end)
+createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 8, false, function(v) SETTINGS.TeamCheck = v end)
 
 -- Criar Aba ESP
 local espTab = createTab("Esp", 2)
@@ -377,7 +479,7 @@ local infoTab = createTab("Info", 4)
 local infoLabel = Instance.new("TextLabel")
 infoLabel.Size = UDim2.new(1, 0, 0, 100)
 infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "gbzinbr scripts\nSistema Nativo sem Erros\nCompatível com PC e Mobile."
+infoLabel.Text = "gbzinbr scripts\nPainel com Slider de FOV\nCompatível com PC e Mobile."
 infoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 infoLabel.TextSize = 13
 infoLabel.Font = Enum.Font.Gotham
@@ -385,7 +487,7 @@ infoLabel.TextWrapped = true
 infoLabel.Parent = infoTab
 
 
--- 5. LÓGICA DE EXECUÇÃO NATIVA (SEM DRAWING API)
+-- 5. LÓGICA DE EXECUÇÃO NATIVA
 local espStorage = {}
 
 local function cleanPlayerESP(player)
@@ -439,10 +541,8 @@ local function getClosestTargetToCenter()
 end
 
 RunService.RenderStepped:Connect(function()
-	-- FOV Nativo
 	fovFrame.Visible = SETTINGS.AimbotMaster and SETTINGS.ShowFOV
 
-	-- Aimbot Nativo
 	if SETTINGS.AimbotMaster then
 		if SETTINGS.AimbotMode == "Rage" or UserInputService.TouchEnabled or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 			local target = getClosestTargetToCenter()
@@ -459,12 +559,10 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 
-	-- Speed Hack
 	if SETTINGS.SpeedHack and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
 		localPlayer.Character.Humanoid.WalkSpeed = 32
 	end
 
-	-- Fullbright
 	if SETTINGS.Fullbright then
 		Lighting.Brightness = 2
 		Lighting.ClockTime = 14
@@ -472,7 +570,6 @@ RunService.RenderStepped:Connect(function()
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
 	end
 
-	-- ESP Nativo (BillboardGui e Highlight)
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= localPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
 			local char = player.Character
@@ -483,7 +580,6 @@ RunService.RenderStepped:Connect(function()
 				if not espStorage[player] then
 					espStorage[player] = {}
 
-					-- Highlight (Box / Silhueta ESP)
 					local hl = Instance.new("Highlight")
 					hl.Name = "ESP_Highlight"
 					hl.FillColor = Color3.fromRGB(255, 30, 30)
@@ -493,7 +589,6 @@ RunService.RenderStepped:Connect(function()
 					hl.Parent = char
 					espStorage[player].Highlight = hl
 
-					-- Billboard (Nome e Vida)
 					local bb = Instance.new("BillboardGui")
 					bb.Name = "ESP_Billboard"
 					bb.Size = UDim2.new(0, 120, 0, 40)
@@ -532,7 +627,6 @@ RunService.RenderStepped:Connect(function()
 					espStorage[player].HpFill = hpFill
 				end
 
-				-- Atualizar Visibilidade do ESP
 				local st = espStorage[player]
 				if st and st.Highlight and st.Billboard then
 					st.Highlight.Enabled = SETTINGS.Box2D
@@ -540,7 +634,6 @@ RunService.RenderStepped:Connect(function()
 					st.Billboard.NameLabel.Visible = SETTINGS.Name
 					st.Billboard.HpBg.Visible = SETTINGS.HealthBar
 
-					-- Atualizar Barra de Vida
 					local healthRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
 					st.HpFill.Size = UDim2.new(healthRatio, 0, 1, 0)
 					st.HpFill.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthRatio), 255 * healthRatio, 0)
