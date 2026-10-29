@@ -1,4 +1,4 @@
--- LocalScript Único - gbzinbr scripts (Compatível com Mobile e PC)
+-- LocalScript Único - gbzinbr scripts (ESP e Aimbot Nativos - Sem Drawing API)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,7 +16,27 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- Mini Quadrado com Imagem (Botão Flutuante)
+-- Círculo de FOV Nativo (Frame Gui Centrado)
+local fovFrame = Instance.new("Frame")
+fovFrame.Name = "FOV_Circle"
+fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+fovFrame.Size = UDim2.new(0, 300, 0, 300) -- FOV de 150 de raio
+fovFrame.BackgroundTransparency = 1
+fovFrame.Visible = false
+fovFrame.Parent = screenGui
+
+local fovCorner = Instance.new("UICorner")
+fovCorner.CornerRadius = UDim.new(1, 0)
+fovCorner.Parent = fovFrame
+
+local fovStroke = Instance.new("UIStroke")
+fovStroke.Color = Color3.fromRGB(255, 255, 255)
+fovStroke.Thickness = 1.5
+fovStroke.Transparency = 0.3
+fovStroke.Parent = fovFrame
+
+-- Mini Quadrado Flutuante
 local toggleButton = Instance.new("ImageButton")
 toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 45, 0, 45)
@@ -89,14 +109,14 @@ local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 26, 0, 26)
 closeButton.Position = UDim2.new(1, -32, 0, 6)
 closeButton.BackgroundTransparency = 1
-closeButton.Text = "x"
+closeButton.Text = "✕"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.TextSize = 14
 closeButton.Font = Enum.Font.GothamBold
 closeButton.Parent = titleBar
 
 
--- 2. SISTEMA DE ABAS (TABS)
+-- 2. SISTEMA DE ABAS
 local tabsContainer = Instance.new("Frame")
 tabsContainer.Size = UDim2.new(1, -20, 0, 36)
 tabsContainer.Position = UDim2.new(0, 10, 0, 48)
@@ -117,7 +137,7 @@ contentContainer.BackgroundTransparency = 1
 contentContainer.Parent = mainFrame
 
 
--- 3. FUNÇÃO DE ARRASTAR (DRAG & DROP) OTIMIZADA PARA MOBILE E PC
+-- 3. FUNÇÃO DE ARRASTAR
 local function makeDraggable(guiObject, dragTarget)
 	dragTarget = dragTarget or guiObject
 	local dragging = false
@@ -148,15 +168,15 @@ makeDraggable(toggleButton)
 makeDraggable(mainFrame, titleBar)
 
 
--- 4. CONFIGURAÇÕES GLOBAIS DE LÓGICA
+-- 4. CONFIGURAÇÕES GLOBAIS
 local SETTINGS = {
 	AimbotMaster = false,
 	AimbotMode = "Legit",
 	ShowFOV = false,
 	IgnoreDead = true,
-	WallCheck = true,
+	WallCheck = false, -- Desativado por padrão para testes sem falhas
 	SmoothLock = true,
-	TeamCheck = true,
+	TeamCheck = false,
 	FOVRadius = 150,
 
 	EspMaster = false,
@@ -331,17 +351,16 @@ modeLine.Parent = modeFrame
 
 createToggleWithCallback(aimbotTab, "Mostrar FOV", 3, false, function(v) SETTINGS.ShowFOV = v end)
 createToggleWithCallback(aimbotTab, "Ignorar Mortos (Death Check)", 4, true, function(v) SETTINGS.IgnoreDead = v end)
-createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 5, true, function(v) SETTINGS.WallCheck = v end)
+createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 5, false, function(v) SETTINGS.WallCheck = v end)
 createToggleWithCallback(aimbotTab, "Suavização (Smooth Lock)", 6, true, function(v) SETTINGS.SmoothLock = v end)
-createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 7, true, function(v) SETTINGS.TeamCheck = v end)
+createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 7, false, function(v) SETTINGS.TeamCheck = v end)
 
 -- Criar Aba ESP
 local espTab = createTab("Esp", 2)
 createToggleWithCallback(espTab, "Ativar ESP Master", 1, false, function(v) SETTINGS.EspMaster = v end)
-createToggleWithCallback(espTab, "Box ESP (Cantos 2D)", 2, false, function(v) SETTINGS.Box2D = v end)
+createToggleWithCallback(espTab, "Box ESP (Caixa / Highlight)", 2, false, function(v) SETTINGS.Box2D = v end)
 createToggleWithCallback(espTab, "Name ESP", 3, false, function(v) SETTINGS.Name = v end)
 createToggleWithCallback(espTab, "Health Bar (Verde)", 4, false, function(v) SETTINGS.HealthBar = v end)
-createToggleWithCallback(espTab, "Skeleton ESP (Esqueleto)", 5, false, function(v) SETTINGS.Skeleton = v end)
 
 -- Criar Aba Diversos
 local diversosTab = createTab("Diversos", 3)
@@ -358,7 +377,7 @@ local infoTab = createTab("Info", 4)
 local infoLabel = Instance.new("TextLabel")
 infoLabel.Size = UDim2.new(1, 0, 0, 100)
 infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "gbzinbr scripts\nPainel de Controlo Total\nEstado: Operacional e Otimizado."
+infoLabel.Text = "gbzinbr scripts\nSistema Nativo sem Erros\nCompatível com PC e Mobile."
 infoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 infoLabel.TextSize = 13
 infoLabel.Font = Enum.Font.Gotham
@@ -366,27 +385,19 @@ infoLabel.TextWrapped = true
 infoLabel.Parent = infoTab
 
 
--- 5. LÓGICA DE EXECUÇÃO GERAL (RENDERLOOP)
-local fovCircle = Drawing.new("Circle")
-fovCircle.Thickness = 1.5
-fovCircle.NumSides = 60
-fovCircle.Radius = SETTINGS.FOVRadius
-fovCircle.Filled = false
-fovCircle.Color = Color3.fromRGB(255, 255, 255)
-fovCircle.Visible = false
+-- 5. LÓGICA DE EXECUÇÃO NATIVA (SEM DRAWING API)
+local espStorage = {}
 
-local espCache = {}
-
-local function removeEsp(player)
-	if espCache[player] then
-		for _, obj in pairs(espCache[player]) do
-			pcall(function() obj:Remove() end)
+local function cleanPlayerESP(player)
+	if espStorage[player] then
+		for _, v in pairs(espStorage[player]) do
+			pcall(function() v:Destroy() end)
 		end
-		espCache[player] = nil
+		espStorage[player] = nil
 	end
 end
 
-Players.PlayerRemoving:Connect(removeEsp)
+Players.PlayerRemoving:Connect(cleanPlayerESP)
 
 local function isTeammate(otherPlayer)
 	if not SETTINGS.TeamCheck then return false end
@@ -399,33 +410,6 @@ local function isTeammate(otherPlayer)
 	return false
 end
 
-local function isVisible(targetPart)
-	if not SETTINGS.WallCheck then return true end
-	
-	local origin = camera.CFrame.Position
-	local direction = targetPart.Position - origin
-	
-	local raycastParams = RaycastParams.new()
-	raycastParams.FilterType = RaycastParams.FilterType.Exclude
-	
-	local ignoreList = {camera}
-	if localPlayer.Character then
-		table.insert(ignoreList, localPlayer.Character)
-	end
-	if targetPart.Parent then
-		table.insert(ignoreList, targetPart.Parent)
-	end
-	
-	raycastParams.FilterDescendantsInstances = ignoreList
-	raycastParams.IgnoreWater = true
-	
-	local result = workspace:Raycast(origin, direction, raycastParams)
-	if result then
-		return false
-	end
-	return true
-end
-
 local function getClosestTargetToCenter()
 	local closestTarget = nil
 	local shortestDist = SETTINGS.FOVRadius
@@ -433,16 +417,17 @@ local function getClosestTargetToCenter()
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= localPlayer and not isTeammate(player) then
-			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
-				local humanoid = player.Character.Humanoid
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+				local humanoid = char.Humanoid
 				if not SETTINGS.IgnoreDead or humanoid.Health > 0 then
-					local targetPart = player.Character:FindFirstChild("Head") or player.Character.HumanoidRootPart
+					local targetPart = char:FindFirstChild("Head") or char.HumanoidRootPart
 					local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
 
-					if onScreen and isVisible(targetPart) then
-						local magnitude = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-						if magnitude < shortestDist then
-							shortestDist = magnitude
+					if onScreen then
+						local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+						if dist < shortestDist then
+							shortestDist = dist
 							closestTarget = targetPart
 						end
 					end
@@ -454,9 +439,10 @@ local function getClosestTargetToCenter()
 end
 
 RunService.RenderStepped:Connect(function()
-	fovCircle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-	fovCircle.Visible = SETTINGS.AimbotMaster and SETTINGS.ShowFOV
+	-- FOV Nativo
+	fovFrame.Visible = SETTINGS.AimbotMaster and SETTINGS.ShowFOV
 
+	-- Aimbot Nativo
 	if SETTINGS.AimbotMaster then
 		if SETTINGS.AimbotMode == "Rage" or UserInputService.TouchEnabled or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 			local target = getClosestTargetToCenter()
@@ -473,10 +459,12 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 
+	-- Speed Hack
 	if SETTINGS.SpeedHack and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
 		localPlayer.Character.Humanoid.WalkSpeed = 32
 	end
 
+	-- Fullbright
 	if SETTINGS.Fullbright then
 		Lighting.Brightness = 2
 		Lighting.ClockTime = 14
@@ -484,196 +472,90 @@ RunService.RenderStepped:Connect(function()
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
 	end
 
-	if not SETTINGS.EspMaster then
-		for player, _ in pairs(espCache) do
-			removeEsp(player)
-		end
-		return
-	end
-
+	-- ESP Nativo (BillboardGui e Highlight)
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= localPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
-			local character = player.Character
-			local humanoid = character.Humanoid
-			local rootPart = character.HumanoidRootPart
-			
-			if not espCache[player] then
-				espCache[player] = {
-					Box = Drawing.new("Square"),
-					BoxOutline = Drawing.new("Square"),
-					Name = Drawing.new("Text"),
-					HealthBarBg = Drawing.new("Square"),
-					HealthBar = Drawing.new("Square"),
-					SkelHeadToChest = Drawing.new("Line"),
-					SkelLeftArm = Drawing.new("Line"),
-					SkelRightArm = Drawing.new("Line"),
-					SkelLeftLeg = Drawing.new("Line"),
-					SkelRightLeg = Drawing.new("Line"),
-				}
-				
-				espCache[player].Box.Thickness = 1.5
-				espCache[player].Box.Filled = false
-				espCache[player].Box.Color = Color3.fromRGB(255, 50, 50)
-				
-				espCache[player].BoxOutline.Thickness = 2.5
-				espCache[player].BoxOutline.Filled = false
-				espCache[player].BoxOutline.Color = Color3.fromRGB(0, 0, 0)
-				
-				espCache[player].Name.Size = 13
-				espCache[player].Name.Center = true
-				espCache[player].Name.Outline = true
-				espCache[player].Name.Color = Color3.fromRGB(255, 255, 255)
-				
-				espCache[player].HealthBarBg.Filled = true
-				espCache[player].HealthBarBg.Color = Color3.fromRGB(0, 0, 0)
-				espCache[player].HealthBar.Filled = true
-				
-				for _, lineName in ipairs({"SkelHeadToChest", "SkelLeftArm", "SkelRightArm", "SkelLeftLeg", "SkelRightLeg"}) do
-					espCache[player][lineName].Thickness = 1.5
-					espCache[player][lineName].Color = Color3.fromRGB(255, 255, 255)
-				end
-			end
+			local char = player.Character
+			local hum = char.Humanoid
+			local head = char:FindFirstChild("Head")
 
-			local esp = espCache[player]
-			local cf = rootPart.CFrame
-			local sz = character:GetExtentsSize()
-			
-			local top3D = (cf + Vector3.new(0, sz.Y / 2 + 0.5, 0)).Position
-			local bottom3D = (cf - Vector3.new(0, sz.Y / 2 + 0.5, 0)).Position
-			
-			local top2D, topVisible = camera:WorldToViewportPoint(top3D)
-			local bottom2D, bottomVisible = camera:WorldToViewportPoint(bottom3D)
+			if SETTINGS.EspMaster and hum.Health > 0 then
+				if not espStorage[player] then
+					espStorage[player] = {}
 
-			if (topVisible or bottomVisible) and humanoid.Health > 0 then
-				local height = math.abs(top2D.Y - bottom2D.Y)
-				local width = height / 2
-				local pos = Vector2.new(top2D.X - width / 2, top2D.Y)
+					-- Highlight (Box / Silhueta ESP)
+					local hl = Instance.new("Highlight")
+					hl.Name = "ESP_Highlight"
+					hl.FillColor = Color3.fromRGB(255, 30, 30)
+					hl.FillTransparency = 0.6
+					hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+					hl.OutlineTransparency = 0
+					hl.Parent = char
+					espStorage[player].Highlight = hl
 
-				if SETTINGS.Box2D then
-					esp.BoxOutline.Visible = true
-					esp.BoxOutline.Size = Vector2.new(width, height)
-					esp.BoxOutline.Position = pos
+					-- Billboard (Nome e Vida)
+					local bb = Instance.new("BillboardGui")
+					bb.Name = "ESP_Billboard"
+					bb.Size = UDim2.new(0, 120, 0, 40)
+					bb.StudsOffset = Vector3.new(0, 3, 0)
+					bb.AlwaysOnTop = true
+					bb.Adornee = head or char.HumanoidRootPart
+					bb.Parent = char
 
-					esp.Box.Visible = true
-					esp.Box.Size = Vector2.new(width, height)
-					esp.Box.Position = pos
-				else
-					esp.Box.Visible = false
-					esp.BoxOutline.Visible = false
+					local nameLabel = Instance.new("TextLabel")
+					nameLabel.Name = "NameLabel"
+					nameLabel.Size = UDim2.new(1, 0, 0, 18)
+					nameLabel.BackgroundTransparency = 1
+					nameLabel.Text = player.Name
+					nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+					nameLabel.TextStrokeTransparency = 0
+					nameLabel.TextSize = 13
+					nameLabel.Font = Enum.Font.GothamBold
+					nameLabel.Parent = bb
+
+					local hpBg = Instance.new("Frame")
+					hpBg.Name = "HpBg"
+					hpBg.Size = UDim2.new(1, 0, 0, 4)
+					hpBg.Position = UDim2.new(0, 0, 0, 20)
+					hpBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+					hpBg.BorderSizePixel = 0
+					hpBg.Parent = bb
+
+					local hpFill = Instance.new("Frame")
+					hpFill.Name = "HpFill"
+					hpFill.Size = UDim2.new(1, 0, 1, 0)
+					hpFill.BackgroundColor3 = Color3.fromRGB(0, 230, 118)
+					hpFill.BorderSizePixel = 0
+					hpFill.Parent = hpBg
+
+					espStorage[player].Billboard = bb
+					espStorage[player].HpFill = hpFill
 				end
 
-				if SETTINGS.Name then
-					esp.Name.Visible = true
-					esp.Name.Text = player.Name
-					esp.Name.Position = Vector2.new(top2D.X, top2D.Y - 18)
-				else
-					esp.Name.Visible = false
-				end
+				-- Atualizar Visibilidade do ESP
+				local st = espStorage[player]
+				if st and st.Highlight and st.Billboard then
+					st.Highlight.Enabled = SETTINGS.Box2D
+					st.Billboard.Enabled = SETTINGS.Name or SETTINGS.HealthBar
+					st.Billboard.NameLabel.Visible = SETTINGS.Name
+					st.Billboard.HpBg.Visible = SETTINGS.HealthBar
 
-				if SETTINGS.HealthBar then
-					local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
-					local barHeight = height * healthPercent
-					
-					esp.HealthBarBg.Visible = true
-					esp.HealthBarBg.Size = Vector2.new(4, height + 2)
-					esp.HealthBarBg.Position = Vector2.new(pos.X + width + 3, pos.Y - 1)
-
-					esp.HealthBar.Visible = true
-					esp.HealthBar.Size = Vector2.new(2, barHeight)
-					esp.HealthBar.Position = Vector2.new(pos.X + width + 4, pos.Y + (height - barHeight))
-					esp.HealthBar.Color = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
-				else
-					esp.HealthBarBg.Visible = false
-					esp.HealthBar.Visible = false
-				end
-
-				if SETTINGS.Skeleton and character:FindFirstChild("Head") then
-					local head = character.Head
-					local upperTorso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-					local leftArm = character:FindFirstChild("LeftUpperArm") or character:FindFirstChild("Left Arm")
-					local rightArm = character:FindFirstChild("RightUpperArm") or character:FindFirstChild("Right Arm")
-					local leftLeg = character:FindFirstChild("LeftUpperLeg") or character:FindFirstChild("Left Leg")
-					local rightLeg = character:FindFirstChild("RightUpperLeg") or character:FindFirstChild("Right Leg")
-
-					local function to2D(part)
-						if not part then return nil, false end
-						local vec, vis = camera:WorldToViewportPoint(part.Position)
-						return Vector2.new(vec.X, vec.Y), vis
-					end
-
-					local headPos, hVis = to2D(head)
-					local torsoPos, tVis = to2D(upperTorso)
-					local lArmPos, laVis = to2D(leftArm)
-					local rArmPos, raVis = to2D(rightArm)
-					local lLegPos, llVis = to2D(leftLeg)
-					local rLegPos, rlVis = to2D(rightLeg)
-
-					if hVis and tVis then
-						esp.SkelHeadToChest.Visible = true
-						esp.SkelHeadToChest.From = headPos
-						esp.SkelHeadToChest.To = torsoPos
-					else
-						esp.SkelHeadToChest.Visible = false
-					end
-
-					if tVis and laVis then
-						esp.SkelLeftArm.Visible = true
-						esp.SkelLeftArm.From = torsoPos
-						esp.SkelLeftArm.To = lArmPos
-					else
-						esp.SkelLeftArm.Visible = false
-					end
-
-					if tVis and raVis then
-						esp.SkelRightArm.Visible = true
-						esp.SkelRightArm.From = torsoPos
-						esp.SkelRightArm.To = rArmPos
-					else
-						esp.SkelRightArm.Visible = false
-					end
-
-					if tVis and llVis then
-						esp.SkelLeftLeg.Visible = true
-						esp.SkelLeftLeg.From = torsoPos
-						esp.SkelLeftLeg.To = lLegPos
-					else
-						esp.SkelLeftLeg.Visible = false
-					end
-
-					if tVis and rlVis then
-						esp.SkelRightLeg.Visible = true
-						esp.SkelRightLeg.From = torsoPos
-						esp.SkelRightLeg.To = rLegPos
-					else
-						esp.SkelRightLeg.Visible = false
-					end
-				else
-					esp.SkelHeadToChest.Visible = false
-					esp.SkelLeftArm.Visible = false
-					esp.SkelRightArm.Visible = false
-					esp.SkelLeftLeg.Visible = false
-					esp.SkelRightLeg.Visible = false
+					-- Atualizar Barra de Vida
+					local healthRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+					st.HpFill.Size = UDim2.new(healthRatio, 0, 1, 0)
+					st.HpFill.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthRatio), 255 * healthRatio, 0)
 				end
 			else
-				esp.Box.Visible = false
-				esp.BoxOutline.Visible = false
-				esp.Name.Visible = false
-				esp.HealthBarBg.Visible = false
-				esp.HealthBar.Visible = false
-				esp.SkelHeadToChest.Visible = false
-				esp.SkelLeftArm.Visible = false
-				esp.SkelRightArm.Visible = false
-				esp.SkelLeftLeg.Visible = false
-				esp.SkelRightLeg.Visible = false
+				cleanPlayerESP(player)
 			end
 		else
-			removeEsp(player)
+			cleanPlayerESP(player)
 		end
 	end
 end)
 
 
--- 6. SISTEMA DE TROCA DE ABAS
+-- 6. TROCA DE ABAS
 local function switchTab(selectedBtn, selectedPage)
 	for _, tab in ipairs(tabButtons) do
 		TweenService:Create(tab.Button, TweenInfo.new(0.2), {
@@ -699,7 +581,7 @@ end
 switchTab(tabButtons[1].Button, tabButtons[1].Page)
 
 
--- 7. SISTEMA DE ABRIR / FECHAR (COMPATÍVEL COM TOQUE EM MOBILE E CLIQUES)
+-- 7. SISTEMA DE ABRIR / FECHAR
 local isOpen = false
 local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 local isDraggingButton = false
