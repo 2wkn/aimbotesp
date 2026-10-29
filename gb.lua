@@ -1,4 +1,4 @@
--- LocalScript Único - gbzinbr scripts (Com Wall Check Funcional)
+-- LocalScript Único - gbzinbr scripts (Compatível com Mobile e PC)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,13 +16,13 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- Mini Quadrado com Imagem
+-- Mini Quadrado com Imagem (Botão Flutuante)
 local toggleButton = Instance.new("ImageButton")
 toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 45, 0, 45)
 toggleButton.Position = UDim2.new(0, 20, 0.5, -20)
 toggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-toggleButton.Image = "rbxassetid://113552756681096" -- Substitui pelo teu ID de Imagem
+toggleButton.Image = "rbxassetid://0" -- Substitui pelo teu ID de Imagem
 toggleButton.AutoButtonColor = false
 toggleButton.Parent = screenGui
 
@@ -117,7 +117,7 @@ contentContainer.BackgroundTransparency = 1
 contentContainer.Parent = mainFrame
 
 
--- 3. FUNÇÃO DE ARRASTAR (DRAG & DROP)
+-- 3. FUNÇÃO DE ARRASTAR (DRAG & DROP) OTIMIZADA PARA MOBILE E PC
 local function makeDraggable(guiObject, dragTarget)
 	dragTarget = dragTarget or guiObject
 	local dragging = false
@@ -154,7 +154,7 @@ local SETTINGS = {
 	AimbotMode = "Legit",
 	ShowFOV = false,
 	IgnoreDead = true,
-	WallCheck = true, -- Wall Check ativado e funcional
+	WallCheck = true,
 	SmoothLock = true,
 	TeamCheck = true,
 	FOVRadius = 150,
@@ -399,7 +399,6 @@ local function isTeammate(otherPlayer)
 	return false
 end
 
--- Função de Wall Check (Raycast preciso)
 local function isVisible(targetPart)
 	if not SETTINGS.WallCheck then return true end
 	
@@ -409,7 +408,6 @@ local function isVisible(targetPart)
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = RaycastParams.FilterType.Exclude
 	
-	-- Ignorar a câmara, o próprio jogador e o alvo a testar
 	local ignoreList = {camera}
 	if localPlayer.Character then
 		table.insert(ignoreList, localPlayer.Character)
@@ -422,12 +420,9 @@ local function isVisible(targetPart)
 	raycastParams.IgnoreWater = true
 	
 	local result = workspace:Raycast(origin, direction, raycastParams)
-	
-	-- Se o raio bateu em algo antes de chegar ao alvo, significa que há uma parede no caminho
 	if result then
 		return false
 	end
-	
 	return true
 end
 
@@ -704,23 +699,24 @@ end
 switchTab(tabButtons[1].Button, tabButtons[1].Page)
 
 
--- 7. SISTEMA DE ABRIR / FECHAR (TOGGLE DO MINI QUADRADO)
+-- 7. SISTEMA DE ABRIR / FECHAR (COMPATÍVEL COM TOQUE EM MOBILE E CLIQUES)
 local isOpen = false
 local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 local isDraggingButton = false
 
 toggleButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		isDraggingButton = false
 	end
 end)
+
 toggleButton.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 		isDraggingButton = true
 	end
 end)
 
-toggleButton.MouseButton1Up:Connect(function()
+local function toggleMenu()
 	if not isDraggingButton then
 		isOpen = not isOpen
 		if isOpen then
@@ -735,7 +731,10 @@ toggleButton.MouseButton1Up:Connect(function()
 			end)
 		end
 	end
-end)
+end
+
+toggleButton.MouseButton1Up:Connect(toggleMenu)
+toggleButton.TouchEnded:Connect(toggleMenu)
 
 closeButton.MouseButton1Click:Connect(function()
 	if isOpen then
