@@ -1,4 +1,4 @@
--- LocalScript Único - gbzinbr scripts (Com Slider de FOV Personalizado)
+-- LocalScript Único - gbzinbr scripts (Versão Definitiva Otimizada e Corrigida)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -42,7 +42,7 @@ toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 45, 0, 45)
 toggleButton.Position = UDim2.new(0, 20, 0.5, -20)
 toggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-toggleButton.Image = "rbxassetid://0" -- Substitui pelo teu ID de Imagem se quiseres
+toggleButton.Image = "rbxassetid://0"
 toggleButton.AutoButtonColor = false
 toggleButton.Parent = screenGui
 
@@ -58,7 +58,7 @@ btnStroke.Parent = toggleButton
 -- Janela Principal
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 480, 0, 420) -- Altura ajustada para caber o slider
+mainFrame.Size = UDim2.new(0, 480, 0, 420)
 mainFrame.Position = UDim2.new(0.5, -240, 0.5, -210)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
@@ -109,7 +109,7 @@ local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 26, 0, 26)
 closeButton.Position = UDim2.new(1, -32, 0, 6)
 closeButton.BackgroundTransparency = 1
-closeButton.Text = "x"
+closeButton.Text = "✕"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.TextSize = 14
 closeButton.Font = Enum.Font.GothamBold
@@ -174,10 +174,10 @@ local SETTINGS = {
 	AimbotMode = "Legit",
 	ShowFOV = false,
 	IgnoreDead = true,
-	WallCheck = false,
+	WallCheck = true,
 	SmoothLock = true,
 	TeamCheck = false,
-	FOVRadius = 150, -- Valor inicial do FOV
+	FOVRadius = 150,
 
 	EspMaster = false,
 	Box2D = false,
@@ -288,7 +288,6 @@ local function createToggleWithCallback(parent, text, order, defaultState, callb
 	end)
 end
 
--- Função para criar o Slider exato da imagem enviada (Regular FOV)
 local function createSlider(parent, text, order, minVal, maxVal, defaultVal, callback)
 	local sliderFrame = Instance.new("Frame")
 	sliderFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -312,7 +311,6 @@ local function createSlider(parent, text, order, minVal, maxVal, defaultVal, cal
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Parent = sliderFrame
 	
-	-- Barra preta de fundo do slider
 	local sliderBar = Instance.new("TextButton")
 	sliderBar.Name = "SliderBar"
 	sliderBar.Size = UDim2.new(1, -24, 0, 12)
@@ -326,7 +324,6 @@ local function createSlider(parent, text, order, minVal, maxVal, defaultVal, cal
 	barCorner.CornerRadius = UDim.new(0, 3)
 	barCorner.Parent = sliderBar
 	
-	-- Bloco vermelho indicador e o número centralizado exatamente como na tua foto
 	local redFill = Instance.new("Frame")
 	redFill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
 	redFill.BackgroundColor3 = Color3.fromRGB(220, 20, 20)
@@ -354,7 +351,6 @@ local function createSlider(parent, text, order, minVal, maxVal, defaultVal, cal
 	line.BorderSizePixel = 0
 	line.Parent = sliderFrame
 	
-	-- Lógica de arrastar o slider (funciona em PC e Telemóvel)
 	local dragging = false
 	
 	local function updateSlider(input)
@@ -389,7 +385,6 @@ end
 local aimbotTab = createTab("Aimbot", 1)
 createToggleWithCallback(aimbotTab, "Ativar Aimbot", 1, false, function(v) SETTINGS.AimbotMaster = v end)
 
--- Slider exato pedido na imagem (Regular FOV de 50 a 500)
 createSlider(aimbotTab, "Regular FOV", 2, 50, 500, 150, function(val)
 	SETTINGS.FOVRadius = val
 	fovFrame.Size = UDim2.new(0, val * 2, 0, val * 2)
@@ -453,7 +448,7 @@ modeLine.Parent = modeFrame
 
 createToggleWithCallback(aimbotTab, "Mostrar FOV", 4, false, function(v) SETTINGS.ShowFOV = v end)
 createToggleWithCallback(aimbotTab, "Ignorar Mortos (Death Check)", 5, true, function(v) SETTINGS.IgnoreDead = v end)
-createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 6, false, function(v) SETTINGS.WallCheck = v end)
+createToggleWithCallback(aimbotTab, "Verificar Paredes (Wall Check)", 6, true, function(v) SETTINGS.WallCheck = v end)
 createToggleWithCallback(aimbotTab, "Suavização (Smooth Lock)", 7, true, function(v) SETTINGS.SmoothLock = v end)
 createToggleWithCallback(aimbotTab, "Verificar Equipa (Team Check)", 8, false, function(v) SETTINGS.TeamCheck = v end)
 
@@ -479,7 +474,7 @@ local infoTab = createTab("Info", 4)
 local infoLabel = Instance.new("TextLabel")
 infoLabel.Size = UDim2.new(1, 0, 0, 100)
 infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "gbzinbr scripts\nPainel com Slider de FOV\nCompatível com PC e Mobile."
+infoLabel.Text = "gbzinbr scripts\nWall Check Otimizado e Seguro\nCompatível com PC e Mobile."
 infoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 infoLabel.TextSize = 13
 infoLabel.Font = Enum.Font.Gotham
@@ -487,7 +482,7 @@ infoLabel.TextWrapped = true
 infoLabel.Parent = infoTab
 
 
--- 5. LÓGICA DE EXECUÇÃO NATIVA
+-- 5. LÓGICA DE EXECUÇÃO OTIMIZADA
 local espStorage = {}
 
 local function cleanPlayerESP(player)
@@ -512,6 +507,42 @@ local function isTeammate(otherPlayer)
 	return false
 end
 
+-- Wall Check Ultra Preciso e Otimizado
+local function isVisible(targetPart)
+	if not SETTINGS.WallCheck then return true end
+	
+	local origin = camera.CFrame.Position
+	local targetPos = targetPart.Position
+	local direction = targetPos - origin
+	
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterType = RaycastParams.RaycastFilterType.Exclude
+	
+	local ignoreList = {camera}
+	if localPlayer.Character then
+		table.insert(ignoreList, localPlayer.Character)
+	end
+	if targetPart.Parent then
+		table.insert(ignoreList, targetPart.Parent)
+	end
+	
+	raycastParams.FilterDescendantsInstances = ignoreList
+	raycastParams.IgnoreWater = true
+	
+	local result = workspace:Raycast(origin, direction, raycastParams)
+	
+	-- Se o raio colidiu com algo antes de chegar perto do alvo, existe uma parede
+	if result then
+		local hitPart = result.Instance
+		-- Valida se o objeto atingido não faz parte do próprio alvo
+		if not hitPart:IsDescendantOf(targetPart.Parent) then
+			return false
+		end
+	end
+	
+	return true
+end
+
 local function getClosestTargetToCenter()
 	local closestTarget = nil
 	local shortestDist = SETTINGS.FOVRadius
@@ -526,7 +557,7 @@ local function getClosestTargetToCenter()
 					local targetPart = char:FindFirstChild("Head") or char.HumanoidRootPart
 					local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
 
-					if onScreen then
+					if onScreen and isVisible(targetPart) then
 						local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
 						if dist < shortestDist then
 							shortestDist = dist
